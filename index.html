@@ -3,294 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Titan Cinema & Trade</title>
+    <title>Private Lounge</title>
     <style>
-        /* --- 1. БАЗА (ТЕМНАЯ ТЕМА) --- */
+        /* --- БАЗА --- */
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
-        
         body { 
-            background-color: #050505; /* Почти черный */
-            color: #e0e0e0; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
-            height: 100vh; height: 100dvh; 
-            display: flex; justify-content: center; overflow: hidden;
+            background: #000; color: #fff; font-family: -apple-system, sans-serif;
+            height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
         }
 
-        /* --- 2. ГЛАВНЫЙ КОНТЕЙНЕР --- */
-        #app {
-            width: 100%;
-            max-width: 600px; /* Идеально для ПК */
-            height: 100%;
-            background: #000;
-            display: flex; flex-direction: column;
-            position: relative;
-            box-shadow: 0 0 50px rgba(0,255,0,0.1); /* Легкое зеленое свечение (Крипта) */
-            border-left: 1px solid #111; border-right: 1px solid #111;
-        }
-
-        /* --- 3. ШАПКА + БИТКОИН ТИКЕР --- */
+        /* --- 1. ШАПКА (БИТКОИН) --- */
         header {
-            padding: 8px 15px;
-            background: #111;
-            border-bottom: 1px solid #222;
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 13px; font-weight: 600;
+            padding: 10px 15px; background: #0a0a0a; border-bottom: 1px solid #222;
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
         }
+        .app-name { font-weight: bold; font-size: 14px; color: #666; letter-spacing: 1px; }
         
-        /* Стиль Тикера Биткоина */
-        .btc-ticker {
-            font-family: 'Courier New', monospace; /* Шрифт терминала */
-            font-size: 16px;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .btc-price { transition: color 0.3s; font-weight: bold; }
-        .up { color: #00ff00; }   /* Зеленый */
-        .down { color: #ff0055; } /* Красный */
-        .btc-icon { color: #f2a900; } /* Золотой цвет BTC */
+        /* Тикер */
+        .btc-ticker { font-family: monospace; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+        .btc-price { font-weight: bold; transition: color 0.3s; }
+        .up { color: #0f0; } .down { color: #f04; }
+        .btc-icon { color: #f2a900; }
 
-        .live-badge { color: #e50914; display: flex; align-items: center; gap: 5px; font-size: 12px; }
-        .live-dot { width: 6px; height: 6px; background: #e50914; border-radius: 50%; animation: pulse 2s infinite; }
-
-        /* --- 4. ВИДЕО --- */
-        #video-wrapper {
+        /* --- 2. ВИДЕО --- */
+        #video-area {
             width: 100%; aspect-ratio: 16/9; background: #000;
             flex-shrink: 0; position: relative; z-index: 10;
         }
-        #player { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+        #player { width: 100%; height: 100%; position: absolute; }
 
-        /* --- 5. УПРАВЛЕНИЕ --- */
+        /* --- 3. УПРАВЛЕНИЕ --- */
         #controls {
-            padding: 10px; background: #0f0f0f; border-bottom: 1px solid #222;
-            display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;
+            padding: 8px; background: #111; border-bottom: 1px solid #222;
+            display: flex; gap: 8px; flex-shrink: 0; z-index: 20;
         }
-        .btn-group { display: flex; gap: 8px; }
-        
-        input {
-            background: #1a1a1a; border: 1px solid #333; color: white;
-            padding: 10px; border-radius: 6px; font-size: 14px; flex-grow: 1;
-        }
-        input:focus { border-color: #f2a900; } /* Фокус желтый как BTC */
-        
-        button {
-            padding: 0 15px; font-weight: 600; color: white; background: #333;
-            border: none; border-radius: 6px; cursor: pointer; transition: 0.1s;
-        }
-        button.primary { background: #e50914; color: #fff; padding: 10px; width: 100%; }
-        button.trade { background: #222; color: #00ff00; border: 1px solid #004400; width: auto; } /* Кнопка Load */
+        input.dark { background: #222; border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; flex-grow: 1; font-size: 14px; }
+        button { padding: 0 15px; background: #333; color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        button.red { background: #e50914; }
 
-        /* --- 6. ЧАТ --- */
-        #chat-container {
-            flex-grow: 1; display: flex; flex-direction: column;
-            background: #050505; overflow: hidden; position: relative;
-        }
-        #messages {
-            flex-grow: 1; overflow-y: auto; padding: 15px;
-            display: flex; flex-direction: column; gap: 8px;
-            scroll-behavior: smooth;
+        /* --- 4. СЕТКА (ОТДЕЛЬНЫЕ ОКНА) --- */
+        #user-grid {
+            flex-grow: 1; 
+            background: #050505;
+            padding: 5px;
+            display: grid;
+            gap: 5px;
+            grid-template-columns: 1fr 1fr; /* По умолчанию 2 окна рядом */
+            grid-auto-rows: 1fr; 
+            overflow-y: auto;
         }
 
-        .msg { max-width: 85%; padding: 8px 12px; border-radius: 8px; font-size: 14px; line-height: 1.4; word-wrap: break-word; }
-        .msg-name { font-size: 10px; color: #666; margin-bottom: 2px; display: block; font-weight: bold; }
+        /* Плитка участника */
+        .user-card {
+            background: #111; border: 1px solid #333; border-radius: 8px;
+            position: relative; display: flex; flex-direction: column; justify-content: flex-end;
+            overflow: hidden; min-height: 100px;
+        }
         
-        .msg.mine { align-self: flex-end; background: #222; color: #fff; border: 1px solid #333; border-right: 3px solid #e50914; }
-        .msg.mine .msg-name { text-align: right; color: #e50914; }
-        
-        .msg.theirs { align-self: flex-start; background: #111; color: #ccc; border: 1px solid #222; border-left: 3px solid #444; }
-        
-        .msg.system { align-self: center; background: transparent; color: #444; font-size: 11px; font-style: italic; }
+        .user-label {
+            position: absolute; top: 6px; left: 6px;
+            background: rgba(0,0,0,0.5); padding: 3px 6px; border-radius: 4px;
+            font-size: 11px; color: #888; font-weight: bold; text-transform: uppercase;
+        }
 
-        .input-bar {
+        .bubbles-container {
+            padding: 10px; display: flex; flex-direction: column; gap: 6px;
+            max-height: 100%; overflow: hidden;
+        }
+
+        .bubble {
+            background: #fff; color: #000; padding: 8px 12px;
+            border-radius: 10px; border-bottom-left-radius: 2px;
+            font-size: 14px; align-self: flex-start;
+            animation: pop 0.2s ease-out; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            word-wrap: break-word;
+        }
+        @keyframes pop { from{transform:scale(0.8);opacity:0} to{transform:scale(1);opacity:1} }
+
+        /* --- 5. ВВОД СООБЩЕНИЯ --- */
+        #input-bar {
             padding: 10px; background: #111; border-top: 1px solid #222;
-            display: flex; gap: 10px; padding-bottom: env(safe-area-inset-bottom, 10px);
+            display: flex; gap: 10px; flex-shrink: 0;
+            padding-bottom: env(safe-area-inset-bottom, 10px);
         }
 
-        /* --- 7. ВХОД --- */
+        /* --- 6. ВХОД (Нейтральный) --- */
         #login-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 999;
+            position: fixed; inset: 0; background: #000; z-index: 999;
             display: flex; justify-content: center; align-items: center;
-            backdrop-filter: blur(5px);
         }
-        .login-box {
-            background: #111; padding: 25px; border-radius: 12px; width: 85%; max-width: 320px;
-            text-align: center; border: 1px solid #333; box-shadow: 0 0 30px rgba(242, 169, 0, 0.1);
-        }
-        .login-box h2 { margin-bottom: 15px; color: #fff; font-size: 18px; }
-
-        /* Огонь */
-        .fire-anim { position: absolute; bottom: 80px; right: 20px; font-size: 60px; opacity: 0; pointer-events: none; z-index: 100; transition: 0.5s; }
-        .show { transform: translateY(-80px); opacity: 1; }
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+        .login-box { text-align: center; width: 80%; max-width: 300px; }
+        .login-box h2 { margin-bottom: 20px; font-weight: normal; color: #888; }
     </style>
 </head>
 <body>
 
     <div id="login-overlay">
         <div class="login-box">
-            <h2>Авторизация</h2>
-            <input type="text" id="usernameInput" placeholder="Имя (Трейдер)..." autofocus>
-            <button class="primary" style="margin-top: 15px; background: #f2a900; color: #000;" onclick="enterApp()">ВОЙТИ</button>
+            <h2>Представьтесь</h2>
+            <input type="text" id="nameIn" class="dark" placeholder="Ваше имя..." style="width: 100%; margin-bottom: 15px;">
+            <button class="red" style="width: 100%; padding: 12px;" onclick="enterRoom()">ВОЙТИ</button>
         </div>
     </div>
 
-    <div id="app">
-        
-        <header>
-            <div class="btc-ticker">
-                <span class="btc-icon">₿</span>
-                <span id="btc-price-display" class="btc-price">loading...</span>
-            </div>
-            <div class="live-badge"><div class="live-dot"></div> <span id="viewer-count">0 ON</span></div>
-        </header>
-
-        <div id="video-wrapper">
-            <div id="player"></div>
+    <header>
+        <div class="btc-ticker">
+            <span class="btc-icon">₿</span>
+            <span id="btc-price">...</span>
         </div>
+        <div class="app-name">PRIVATE LOUNGE</div>
+    </header>
 
-        <div id="controls">
-            <button class="primary" onclick="sendReaction()">🔥 РЕСПЕКТ</button>
-            <div class="btn-group">
-                <input type="text" id="videoUrl" placeholder="Ссылка (Shorts/Video)..." />
-                <button class="trade" onclick="changeVideo()">▶ LOAD</button>
-            </div>
-        </div>
+    <div id="video-area">
+        <div id="player"></div>
+    </div>
 
-        <div id="chat-container">
-            <div id="messages">
-                <div class="msg system">Система готова. Ожидание данных...</div>
-            </div>
-            <div class="input-bar">
-                <input type="text" id="chatInput" placeholder="Сообщение..." autocomplete="off">
-                <button class="primary" style="width: auto;" onclick="sendMessage()">➤</button>
-            </div>
-            <div id="fire" class="fire-anim">🔥</div>
-        </div>
+    <div id="controls">
+        <button class="red" onclick="socket.emit('send_reaction')">🔥</button>
+        <input type="text" id="vidUrl" class="dark" placeholder="Ссылка (Shorts/Video)...">
+        <button onclick="changeVideo()">▶</button>
+    </div>
+
+    <div id="user-grid"></div>
+
+    <div id="input-bar">
+        <input type="text" id="msgIn" class="dark" placeholder="Сообщение..." autocomplete="off">
+        <button class="red" onclick="sendMsg()">➤</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         let player;
-        let isRemote = false;
-        let lastPrice = 0;
 
-        // --- 1. ЛОГИКА BTC (Binance WebSocket) ---
-        // Подключаемся напрямую к бирже, без сервера
+        // --- БИТКОИН (Websocket Binance) ---
         const ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
-        const priceElement = document.getElementById('btc-price-display');
-
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            const price = parseFloat(data.p).toFixed(2); // Цена с 2 знаками
-            
-            // Цвет: Зеленый если выросла, Красный если упала
-            if (price > lastPrice) {
-                priceElement.className = 'btc-price up';
-                priceElement.textContent = `${price} ▲`;
-            } else if (price < lastPrice) {
-                priceElement.className = 'btc-price down';
-                priceElement.textContent = `${price} ▼`;
-            }
-            lastPrice = price;
+        const btcEl = document.getElementById('btc-price');
+        let lastP = 0;
+        ws.onmessage = (e) => {
+            const p = parseFloat(JSON.parse(e.data).p).toFixed(2);
+            btcEl.textContent = p;
+            btcEl.className = p > lastP ? 'btc-price up' : 'btc-price down';
+            lastP = p;
         };
 
-        // --- 2. ВХОД ---
-        function enterApp() {
-            const name = document.getElementById('usernameInput').value.trim();
-            if (name) {
-                socket.emit('set_username', name);
+        // --- ВХОД ---
+        function enterRoom() {
+            const name = document.getElementById('nameIn').value.trim();
+            if(name) {
+                socket.emit('join_game', name); // Отправляем имя
                 document.getElementById('login-overlay').style.display = 'none';
-                initYouTube();
-            } else { alert("Введи имя!"); }
+                
+                // Грузим ютуб
+                var tag = document.createElement('script');
+                tag.src = "https://www.youtube.com/iframe_api";
+                document.body.appendChild(tag);
+            }
         }
 
-        // --- 3. YOUTUBE ---
-        function initYouTube() {
-            var tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            var firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-        }
+        // --- СЕТКА ---
+        socket.on('update_grid', (users) => {
+            const grid = document.getElementById('user-grid');
+            grid.innerHTML = ''; // Полная перерисовка
+            
+            // Адаптив колонок
+            let cols = (users.length === 1) ? 1 : 2; 
+            if(window.innerWidth > 600 && users.length > 4) cols = 3;
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
 
+            users.forEach(u => {
+                const card = document.createElement('div');
+                card.className = 'user-card';
+                card.style.borderColor = u.color; // Цвет рамки
+                
+                card.innerHTML = `
+                    <div class="user-label" style="color:${u.color}">${u.name}</div>
+                    <div class="bubbles-container" id="chat-${u.id}"></div>
+                `;
+                grid.appendChild(card);
+            });
+        });
+
+        socket.on('chat_bubble', (data) => {
+            const area = document.getElementById(`chat-${data.userId}`);
+            if(area) {
+                const b = document.createElement('div');
+                b.className = 'bubble';
+                b.textContent = data.text;
+                area.appendChild(b);
+                // Держим только последние 3 сообщения, чтобы не забивать плитку
+                while(area.children.length > 3) area.removeChild(area.firstChild);
+            }
+        });
+
+        // --- ВИДЕО ---
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 videoId: 'jfKfPfyJRdk',
-                playerVars: { 'playsinline': 1, 'rel': 0, 'controls': 1, 'modestbranding': 1 },
-                events: { 'onStateChange': onPlayerStateChange }
+                playerVars: { 'playsinline': 1, 'controls': 1, 'rel': 0 },
+                events: { 'onStateChange': onStateChange }
             });
         }
-
-        function onPlayerStateChange(event) {
-            if (isRemote) return;
-            const t = player.getCurrentTime();
-            if (event.data == YT.PlayerState.PLAYING) socket.emit('sync_action', {type:'play', time:t});
-            if (event.data == YT.PlayerState.PAUSED) socket.emit('sync_action', {type:'pause', time:t});
+        function onStateChange(e) {
+            if (e.data == 1) socket.emit('sync_action', {type:'play', time:player.getCurrentTime()});
+            if (e.data == 2) socket.emit('sync_action', {type:'pause', time:player.getCurrentTime()});
         }
+        socket.on('sync_action', (d) => { if(Math.abs(player.getCurrentTime()-d.time)>1) player.seekTo(d.time); d.type=='play'?player.playVideo():player.pauseVideo(); });
+        socket.on('update_video', (id) => player && player.loadVideoById(id));
 
-        // --- 4. SOCKETS ---
-        socket.on('update_viewers', (count) => {
-            document.getElementById('viewer-count').textContent = `${count} ON`;
-        });
-
-        socket.on('sync_action', (data) => {
-            isRemote = true;
-            if (player && player.seekTo) {
-                if (Math.abs(player.getCurrentTime() - data.time) > 1) player.seekTo(data.time);
-                if (data.type === 'play') player.playVideo();
-                if (data.type === 'pause') player.pauseVideo();
-            }
-            setTimeout(() => { isRemote = false; }, 500);
-        });
-
-        // --- ИСПРАВЛЕННАЯ ЗАГРУЗКА ВИДЕО (Shorts + Video) ---
         function changeVideo() {
-            let val = document.getElementById('videoUrl').value.trim();
-            if(!val) return;
+            let val = document.getElementById('vidUrl').value;
             let vid = '';
-
-            // Умный парсер ссылок
-            if (val.includes('shorts/')) vid = val.split('shorts/')[1].split('?')[0];
-            else if (val.includes('v=')) vid = val.split('v=')[1].split('&')[0];
-            else if (val.includes('youtu.be/')) vid = val.split('youtu.be/')[1].split('?')[0];
-            else if (val.length === 11) vid = val;
-
-            if(vid) { 
-                socket.emit('change_video', vid); 
-                document.getElementById('videoUrl').value = '';
-            } else { alert("Ссылка кривая!"); }
+            if(val.includes('shorts/')) vid = val.split('shorts/')[1].split('?')[0];
+            else if(val.includes('v=')) vid = val.split('v=')[1].split('&')[0];
+            else if(val.includes('youtu.be/')) vid = val.split('youtu.be/')[1].split('?')[0];
+            else if(val.length===11) vid = val;
+            
+            if(vid) { socket.emit('change_video', vid); document.getElementById('vidUrl').value=''; }
         }
-        socket.on('update_video', (id) => { if(player) player.loadVideoById(id); });
 
-        // Реакция
-        function sendReaction() { socket.emit('send_reaction'); }
-        socket.on('show_reaction', () => {
-            const el = document.getElementById('fire');
-            el.classList.add('show');
-            setTimeout(() => { el.classList.remove('show'); }, 1000);
-        });
-
-        // Чат
-        const chatIn = document.getElementById('chatInput');
-        const list = document.getElementById('messages');
-
-        function sendMessage() {
-            const txt = chatIn.value.trim();
-            if(txt) { socket.emit('chat_message', txt); chatIn.value = ''; chatIn.focus(); }
+        // ЧАТ ОТПРАВКА
+        function sendMsg() {
+            const txt = document.getElementById('msgIn').value.trim();
+            if(txt) { socket.emit('chat_message', txt); document.getElementById('msgIn').value=''; }
         }
-        chatIn.addEventListener("keyup", (e) => { if(e.key === "Enter") sendMessage(); });
-
-        socket.on('chat_message', (data) => {
-            const div = document.createElement('div');
-            if (data.type === 'system') {
-                div.className = 'msg system'; div.textContent = data.text;
-            } else {
-                const isMine = (data.userId === socket.id);
-                div.className = isMine ? 'msg mine' : 'msg theirs';
-                div.innerHTML = `<span class="msg-name">${isMine ? 'Я' : data.user}</span>${data.text}`;
-            }
-            list.appendChild(div);
-            list.scrollTop = list.scrollHeight;
-        });
     </script>
 </body>
 </html>
