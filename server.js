@@ -4,28 +4,37 @@ const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: { origin: "*" }
+});
 
-// Раздаем наш сайт
 app.use(express.static(__dirname));
 
 io.on('connection', (socket) => {
-    console.log('Новый зритель:', socket.id);
+    console.log('User connected:', socket.id);
 
-    // Когда кто-то нажал плей/паузу или перемотал
+    // 1. Синхронизация (Плей/Пауза)
     socket.on('sync_action', (data) => {
-        // Рассылаем всем ОСТАЛЬНЫМ (кроме того, кто нажал)
         socket.broadcast.emit('sync_action', data);
     });
 
-    // Когда кто-то нажал кнопку "Респект"
+    // 2. Эмоция (Огонь)
     socket.on('send_reaction', () => {
-        // Показываем огонь ВСЕМ
         io.emit('show_reaction');
+    });
+
+    // 3. Смена видео (Новая фича)
+    socket.on('change_video', (videoId) => {
+        io.emit('update_video', videoId); // Говорим ВСЕМ включить новое видео
+    });
+
+    // 4. Чат (Новая фича)
+    socket.on('chat_message', (msg) => {
+        io.emit('chat_message', msg); // Рассылаем сообщение всем
     });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`Сервер запущен на порту ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
