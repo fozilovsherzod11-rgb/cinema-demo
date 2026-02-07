@@ -3,206 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Titan Cinema</title>
+    <title>Titan Room</title>
     <style>
-        /* ГЛАВНЫЙ ФИКС: 100dvh (динамическая высота) */
-        * { box-sizing: border-box; }
+        /* БАЗА */
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
         body { 
-            margin: 0; 
-            background-color: #000; 
-            color: #fff; 
-            font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif; 
-            height: 100vh; /* Для старых */
-            height: 100dvh; /* Для новых мобилок - чтобы не прыгало */
-            display: flex; 
-            flex-direction: column; 
-            overflow: hidden; /* Запрещаем скролл всего сайта */
+            background: #000; color: #fff; font-family: sans-serif;
+            height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
         }
 
-        /* ЗОНА 1: ВИДЕО (Фиксирована сверху) */
-        #video-section {
-            width: 100%;
-            background: #000;
-            flex-shrink: 0; /* Не сжимать */
-            position: relative;
-            z-index: 10;
+        /* 1. ВИДЕО (Сверху) */
+        #video-area {
+            width: 100%; aspect-ratio: 16/9; background: #000;
+            flex-shrink: 0; position: relative; z-index: 10;
         }
-        .video-wrapper {
-            position: relative;
-            padding-bottom: 56.25%; /* 16:9 */
-            height: 0;
-            width: 100%;
+        #player { width: 100%; height: 100%; position: absolute; }
+
+        /* 2. УПРАВЛЕНИЕ (Полоска) */
+        #controls {
+            padding: 8px; background: #111; border-bottom: 1px solid #333;
+            display: flex; gap: 8px; flex-shrink: 0; z-index: 20;
         }
-        .video-wrapper iframe {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+        input.dark { background: #222; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 6px; flex-grow: 1; }
+        button { padding: 8px 15px; background: #333; color: #fff; border: none; border-radius: 6px; font-weight: bold; }
+        button.red { background: #e50914; }
+
+        /* 3. СЕТКА УЧАСТНИКОВ (Главная фишка) */
+        #user-grid {
+            flex-grow: 1; /* Занимает всё место снизу */
+            background: #0a0a0a;
+            padding: 5px;
+            display: grid;
+            gap: 5px;
+            /* По умолчанию 2 колонки, как на рисунке */
+            grid-template-columns: 1fr 1fr; 
+            grid-auto-rows: 1fr; /* Ряды растягиваются равномерно */
+            overflow-y: auto;
         }
 
-        /* ЗОНА 2: КНОПКИ (Фиксирована посередине) */
-        #controls-section {
-            padding: 8px 10px;
-            background: #111;
-            border-bottom: 1px solid #333;
-            flex-shrink: 0; /* Не сжимать */
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        
-        .control-row { display: flex; gap: 8px; }
-        
-        input { 
-            background: #222; border: 1px solid #444; color: white; 
-            padding: 10px; border-radius: 6px; font-size: 16px; outline: none; flex-grow: 1; 
-        }
-        
-        button { 
-            padding: 10px 15px; font-size: 14px; font-weight: bold; 
-            color: white; background: #333; border: 1px solid #444; border-radius: 6px; 
-        }
-        button.red { background: #e50914; border-color: #e50914; width: 100%; }
-        
-        /* ЗОНА 3: ЧАТ (Растягивается на всё оставшееся место) */
-        #chat-section {
-            flex-grow: 1; /* Забирает всё свободное место снизу */
-            display: flex;
-            flex-direction: column;
-            background: #0d0d0d;
-            overflow: hidden; /* Скролл только внутри списка */
+        /* КАРТОЧКА УЧАСТНИКА (Плитка) */
+        .user-card {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
             position: relative;
+            display: flex; flex-direction: column;
+            justify-content: flex-end; /* Текст снизу */
+            overflow: hidden;
+            transition: 0.3s;
+            min-height: 120px; /* Минимальная высота плитки */
         }
         
-        #messages-list {
-            flex-grow: 1;
-            overflow-y: auto; /* Скролл здесь */
+        /* Имя участника (в углу) */
+        .user-name-tag {
+            position: absolute; top: 8px; left: 8px;
+            background: rgba(0,0,0,0.6); padding: 4px 8px;
+            border-radius: 4px; font-size: 12px; color: #ccc; font-weight: bold;
+        }
+
+        /* Аватар (Круг в центре) */
+        .user-avatar {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 50px; height: 50px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: bold; opacity: 0.3;
+        }
+
+        /* Область сообщений внутри плитки */
+        .bubble-area {
             padding: 10px;
-            list-style: none;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            -webkit-overflow-scrolling: touch; /* Плавный скролл на iPhone */
+            display: flex; flex-direction: column; gap: 5px;
+            max-height: 100%; overflow-y: hidden;
         }
         
-        .msg { padding: 8px 12px; background: #222; border-radius: 12px; font-size: 14px; max-width: 85%; word-wrap: break-word; align-self: flex-start; }
-        .msg.system { background: transparent; color: #666; font-size: 12px; align-self: center; }
-
-        .chat-input-bar {
-            padding: 10px;
-            background: #111;
-            border-top: 1px solid #333;
-            display: flex; gap: 8px;
-            padding-bottom: env(safe-area-inset-bottom); /* Для iPhone без кнопок */
+        .bubble {
+            background: #fff; color: #000;
+            padding: 8px 12px; border-radius: 12px; border-bottom-left-radius: 2px;
+            font-size: 14px; align-self: flex-start;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            word-wrap: break-word;
         }
 
-        /* Огонь */
-        .emoji-overlay { position: fixed; bottom: 80px; right: 20px; font-size: 80px; pointer-events: none; opacity: 0; transition: transform 0.6s, opacity 0.6s; z-index: 999; }
-        .fly-up { transform: translateY(-150px); opacity: 1; }
+        @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* ВВОД (Приклеен к низу) */
+        #input-bar {
+            padding: 10px; background: #111; border-top: 1px solid #333;
+            display: flex; gap: 10px; flex-shrink: 0;
+            padding-bottom: env(safe-area-inset-bottom, 10px);
+        }
+        
+        /* ВХОД */
+        #login-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 999;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .login-box { text-align: center; width: 80%; max-width: 300px; }
     </style>
 </head>
 <body>
 
-    <div id="video-section">
-        <div class="video-wrapper">
-            <div id="player"></div>
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2 style="margin-bottom: 20px;">Кто ты, воин?</h2>
+            <input type="text" id="nameIn" class="dark" placeholder="Твое имя..." style="width: 100%; font-size: 18px; margin-bottom: 15px;">
+            <button class="red" style="width: 100%; padding: 15px;" onclick="joinRoom()">ВОЙТИ В КОМНАТУ</button>
         </div>
     </div>
 
-    <div id="controls-section">
-        <button class="red" onclick="sendReaction()">🔥 РЕСПЕКТ (Sync)</button>
-        <div class="control-row">
-            <input type="text" id="videoUrlInput" placeholder="Ссылка YouTube..." />
-            <button onclick="changeVideo()">▶ Load</button>
-        </div>
+    <div id="video-area">
+        <div id="player"></div>
     </div>
 
-    <div id="chat-section">
-        <ul id="messages-list">
-            <li class="msg system">Чат готов.</li>
-        </ul>
-        <div class="chat-input-bar">
-            <input type="text" id="chatMsgInput" placeholder="Сообщение..." autocomplete="off">
-            <button class="red" style="width: auto;" onclick="sendMessage()">➤</button>
-        </div>
+    <div id="controls">
+        <button class="red" onclick="socket.emit('send_reaction')">🔥</button>
+        <input type="text" id="vidUrl" class="dark" placeholder="Ссылка YouTube...">
+        <button onclick="changeVideo()">▶</button>
     </div>
 
-    <div id="fireEmoji" class="emoji-overlay">🔥</div>
+    <div id="user-grid">
+        </div>
+
+    <div id="input-bar">
+        <input type="text" id="msgIn" class="dark" placeholder="Напиши что-нибудь...">
+        <button class="red" onclick="sendMsg()">➤</button>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        let player;
-        let isRemoteUpdate = false;
+        let player, myId;
+        
+        // --- ЛОГИКА СЕТКИ ---
+        socket.on('update_grid', (users) => {
+            const grid = document.getElementById('user-grid');
+            
+            // Сохраняем текущие сообщения, чтобы не мигали (в реальном проекте сложнее, тут упростим перерисовку)
+            // Полная перерисовка для надежности позиций
+            grid.innerHTML = '';
 
-        // --- YOUTUBE ---
-        var tag = document.createElement('script');
-        tag.src = "https://www.youtube.com/iframe_api";
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+            // Адаптивная сетка: 
+            // 1 чел = 1 колонка
+            // 2-4 чел = 2 колонки
+            // 5-6 чел = 2 или 3 колонки
+            let cols = (users.length === 1) ? 1 : 2;
+            if (users.length > 4 && window.innerWidth > 600) cols = 3; // На компе 3 колонки
+            
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+            users.forEach(u => {
+                const card = document.createElement('div');
+                card.className = 'user-card';
+                card.id = `card-${u.id}`;
+                card.style.borderColor = u.color;
+                
+                card.innerHTML = `
+                    <div class="user-avatar" style="background:${u.color}">${u.name[0]}</div>
+                    <div class="user-name-tag">${u.name}</div>
+                    <div class="bubble-area" id="bubbles-${u.id}"></div>
+                `;
+                grid.appendChild(card);
+            });
+        });
+
+        // --- ЛОГИКА СООБЩЕНИЙ В ПЛИТКАХ ---
+        socket.on('chat_bubble', (data) => {
+            const area = document.getElementById(`bubbles-${data.userId}`);
+            if (area) {
+                const b = document.createElement('div');
+                b.className = 'bubble';
+                b.textContent = data.text;
+                area.appendChild(b);
+                
+                // Удаляем старые, если их много (оставляем 2 последних)
+                while (area.children.length > 2) area.removeChild(area.firstChild);
+            }
+        });
+
+        // --- ВХОД И ЮТУБ ---
+        function joinRoom() {
+            const name = document.getElementById('nameIn').value || "Аноним";
+            socket.emit('set_username', name);
+            document.getElementById('login-overlay').style.display = 'none';
+            
+            // Запускаем YouTube
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            document.body.appendChild(tag);
+        }
 
         function onYouTubeIframeAPIReady() {
             player = new YT.Player('player', {
                 videoId: 'jfKfPfyJRdk',
-                playerVars: { 'playsinline': 1, 'rel': 0, 'modestbranding': 1, 'controls': 1 },
-                events: { 'onStateChange': onPlayerStateChange }
+                playerVars: { 'playsinline': 1, 'controls': 1, 'rel': 0 },
+                events: { 'onStateChange': onStateChange }
             });
         }
 
-        function onPlayerStateChange(event) {
-            if (isRemoteUpdate) return;
-            const time = player.getCurrentTime();
-            if (event.data === YT.PlayerState.PLAYING) socket.emit('sync_action', { type: 'play', time: time });
-            if (event.data === YT.PlayerState.PAUSED) socket.emit('sync_action', { type: 'pause', time: time });
+        // --- СТАНДАРТНЫЕ ФУНКЦИИ ---
+        function sendMsg() {
+            const txt = document.getElementById('msgIn').value;
+            if(txt) { socket.emit('chat_message', txt); document.getElementById('msgIn').value = ''; }
         }
-
-        // --- ЛОГИКА ---
-        socket.on('sync_action', (data) => {
-            isRemoteUpdate = true;
-            if (Math.abs(player.getCurrentTime() - data.time) > 1) player.seekTo(data.time);
-            if (data.type === 'play') player.playVideo();
-            if (data.type === 'pause') player.pauseVideo();
-            setTimeout(() => { isRemoteUpdate = false; }, 500);
-        });
-
-        function sendReaction() { socket.emit('send_reaction'); }
-        socket.on('show_reaction', () => {
-            const el = document.getElementById('fireEmoji');
-            el.classList.add('fly-up');
-            setTimeout(() => { el.classList.remove('fly-up'); }, 1000);
-        });
 
         function changeVideo() {
-            const input = document.getElementById('videoUrlInput');
-            const url = input.value.trim();
-            if (!url) return;
-            let videoId = '';
-            try {
-                if (url.includes('v=')) videoId = url.split('v=')[1].split('&')[0];
-                else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
-                else if (url.includes('shorts/')) videoId = url.split('shorts/')[1].split('?')[0];
-            } catch(e) {}
-
-            if (videoId) { socket.emit('change_video', videoId); input.value = ''; }
+            let val = document.getElementById('vidUrl').value;
+            let vid = val.split('v=')[1] || val.split('youtu.be/')[1] || val;
+            if(vid) { socket.emit('change_video', vid.split('&')[0]); }
         }
-        socket.on('update_video', (id) => { if(player) player.loadVideoById(id); });
-
-        // ЧАТ
-        const chatInput = document.getElementById('chatMsgInput');
-        const list = document.getElementById('messages-list');
         
-        function sendMessage() {
-            const txt = chatInput.value.trim();
-            if (txt) { socket.emit('chat_message', txt); chatInput.value = ''; }
+        socket.on('update_video', (id) => player && player.loadVideoById(id));
+        socket.on('sync_action', (d) => { if(Math.abs(player.getCurrentTime()-d.time)>1) player.seekTo(d.time); d.type=='play'?player.playVideo():player.pauseVideo(); });
+        
+        function onStateChange(e) {
+            if (e.data == 1) socket.emit('sync_action', {type:'play', time:player.getCurrentTime()});
+            if (e.data == 2) socket.emit('sync_action', {type:'pause', time:player.getCurrentTime()});
         }
-        chatInput.addEventListener("keyup", (e) => { if(e.key === "Enter") sendMessage(); });
-
-        socket.on('chat_message', (msg) => {
-            const li = document.createElement('li');
-            li.className = 'msg';
-            li.textContent = msg;
-            list.appendChild(li);
-            list.scrollTop = list.scrollHeight;
-        });
     </script>
 </body>
 </html>
