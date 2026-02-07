@@ -8,31 +8,32 @@ const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(express.static(__dirname));
 
-// База данных участников в памяти
-let users = {};
+// Храним состояние комнаты
+let users = {}; // Активные пользователи
+let messageHistory = {}; // История сообщений для каждого имени (упрощенно)
 
 io.on('connection', (socket) => {
-    // При входе создаем "пустого" пользователя
-    users[socket.id] = {
-        id: socket.id,
-        name: "Гость " + Math.floor(Math.random() * 100),
-        color: getRandomColor()
-    };
     
-    // Отправляем всем новый список плиток
-    io.emit('update_grid', Object.values(users));
+    // 1. Вход в комнату
+    socket.on('join_game', (name) => {
+        const userName = name || "Гость " + Math.floor(Math.random()*100);
+        
+        users[socket.id] = {
+            id: socket.id,
+            name: userName,
+            color: getRandomColor()
+        };
 
-    // 1. Смена имени
-    socket.on('set_username', (name) => {
-        if (users[socket.id]) {
-            users[socket.id].name = name;
-            io.emit('update_grid', Object.values(users)); // Обновляем сетку всем
-        }
+        // Отправляем всем обновленную сетку
+        io.emit('update_grid', Object.values(users));
+        
+        // Если для этого имени есть история - можно было бы восстановить (тут пока просто сетка)
     });
 
-    // 2. Чат (теперь летит в конкретную плитку)
+    // 2. Чат (Пузыри в плитках)
     socket.on('chat_message', (msg) => {
         if (users[socket.id]) {
+            // Отправляем всем: "В плитке этого юзера покажи сообщение"
             io.emit('chat_bubble', {
                 userId: socket.id,
                 text: msg
@@ -40,9 +41,9 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 3. Синхронизация и Видео
-    socket.on('sync_action', (data) => socket.broadcast.emit('sync_action', data));
+    // 3. Видео и Синхрон
     socket.on('change_video', (id) => io.emit('update_video', id));
+    socket.on('sync_action', (data) => socket.broadcast.emit('sync_action', data));
     socket.on('send_reaction', () => io.emit('show_reaction'));
 
     // Выход
@@ -52,9 +53,8 @@ io.on('connection', (socket) => {
     });
 });
 
-// Генератор случайных цветов для аватарок
 function getRandomColor() {
-    const colors = ['#e50914', '#FFA500', '#008000', '#0000FF', '#800080', '#00CED1'];
+    const colors = ['#e50914', '#007bff', '#28a745', '#ffc107', '#6f42c1'];
     return colors[Math.floor(Math.random() * colors.length)];
 }
 
