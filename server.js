@@ -13,24 +13,26 @@ app.use(express.static(__dirname));
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
-    // 1. Синхронизация (Плей/Пауза)
+    // 1. Синхрон видео
     socket.on('sync_action', (data) => {
         socket.broadcast.emit('sync_action', data);
     });
 
-    // 2. Эмоция (Огонь)
+    // 2. Эмоция
     socket.on('send_reaction', () => {
         io.emit('show_reaction');
     });
 
-    // 3. Смена видео (Новая фича)
+    // 3. Смена видео
     socket.on('change_video', (videoId) => {
-        io.emit('update_video', videoId); // Говорим ВСЕМ включить новое видео
+        console.log('Changing video to:', videoId);
+        io.emit('update_video', videoId);
     });
 
-    // 4. Чат (Новая фича)
+    // 4. Чат
     socket.on('chat_message', (msg) => {
-        io.emit('chat_message', msg); // Рассылаем сообщение всем
+        // Отправляем сообщение всем, включая отправителя
+        io.emit('chat_message', msg);
     });
 });
 
